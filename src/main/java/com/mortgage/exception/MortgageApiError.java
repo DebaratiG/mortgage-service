@@ -7,7 +7,8 @@ package com.mortgage.exception;
  * Fields:
  *  1. code: A string that uniquely identifies the type of error, allowing clients to interpret the issue programmatically.
  *  2. message: A human-readable message describing the error, providing context for the issue encountered.
- *  3. traceId: A unique identifier for tracing the error in logs or distributed systems, aiding in debugging and support.
+ *  3. cause: Cause of the exception described for understanding of the issue.
+ *  4. path: The path to the endpoint that caused the error.
  */
-public record MortgageApiError(String code, String Message, String traceId) {
+public record MortgageApiError(String code, String message, String cause, String path) {
 }

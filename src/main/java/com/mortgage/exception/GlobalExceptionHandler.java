@@ -1,17 +1,14 @@
 package com.mortgage.exception;
 
-import org.hibernate.exception.ConstraintViolationException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-
-import java.time.LocalDateTime;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -19,6 +16,7 @@ import java.util.stream.Collectors;
  * Handles various exceptions and returns standardized error responses.
  */
 @RestControllerAdvice
+@Slf4j
 public class GlobalExceptionHandler {
 
     /**
@@ -26,25 +24,15 @@ public class GlobalExceptionHandler {
      * Returns 422 Unprocessable Entity with field-level error details.
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationExceptions(
-            MethodArgumentNotValidException ex) {
-        
-        var errors = ex.getBindingResult().getAllErrors().stream()
-                .collect(Collectors.toMap(
-                        error -> ((FieldError) error).getField(),
-                        error -> error.getDefaultMessage() != null ? error.getDefaultMessage() : "Invalid value",
-                        (existing, replacement) -> existing
-                ));
+    public ResponseEntity<MortgageApiError> handleValidationExceptions(
+            MethodArgumentNotValidException ex, HttpServletRequest request) {
 
-        var response = Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", HttpStatus.UNPROCESSABLE_ENTITY.value(),
-                "error", "Validation Failed",
-                "message", "Invalid input parameters",
-                "details", errors
-        );
-
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(response);
+        String message = ex.getBindingResult().getFieldErrors()
+                .stream()
+                .map(err -> err.getField()+": " + err.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+        log.warn(message);
+        return toResponse(HttpStatus.UNPROCESSABLE_ENTITY, message, request);
     }
 
     /**
@@ -52,67 +40,24 @@ public class GlobalExceptionHandler {
      * Returns 400 Bad Requests.
      */
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<Map<String, Object>> handleHttpMessageNotReadable(
-            HttpMessageNotReadableException ex) {
+    public ResponseEntity<MortgageApiError> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex, HttpServletRequest request) {
 
-        Map<String, Object> response = Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", HttpStatus.BAD_REQUEST.value(),
-                "error", "Bad Request",
-                "message", "Invalid request format. Please check your JSON syntax and data types."
-        );
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        String message = "Invalid request format. Please check your JSON syntax and data types.";
+        log.warn(message);
+        return toResponse(HttpStatus.BAD_REQUEST, message, request);
     }
 
     /**
-     * Handles type mismatch errors (e.g., passing string where number expected).
+     * Handles mortgage rate not found.
      * Returns 400 Bad Request.
      */
-    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<Map<String, Object>> handleTypeMismatch(
-            MethodArgumentTypeMismatchException ex) {
+    @ExceptionHandler(MortgageRateNotFoundException.class)
+    public ResponseEntity<MortgageApiError> handleTypeMismatch(
+            MortgageRateNotFoundException ex, HttpServletRequest request) {
 
-        String typeName = ex.getRequiredType() != null
-                ? ex.getRequiredType().getSimpleName()
-                : "unknown";
-
-        String message = String.format(
-                "Invalid value '%s' for parameter '%s'. Expected type: %s",
-                ex.getValue(),
-                ex.getName(),
-                typeName
-        );
-
-        Map<String, Object> response = Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", HttpStatus.BAD_REQUEST.value(),
-                "error", "Bad Request",
-                "message", message
-        );
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
-    }
-
-    /**
-     * Handles RuntimeException (e.g., interest rate not found for maturity period).
-     * Returns 404 Not Found or 500 Internal Server Error depending on the message.
-     */
-    @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
-
-        HttpStatus status = ex.getMessage() != null && ex.getMessage().contains("not found")
-                ? HttpStatus.NOT_FOUND
-                : HttpStatus.INTERNAL_SERVER_ERROR;
-
-        Map<String, Object> response = Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", status.value(),
-                "error", status.getReasonPhrase(),
-                "message", ex.getMessage()
-        );
-
-        return ResponseEntity.status(status).body(response);
+        log.warn("Not found: {}", ex.getMessage());
+        return toResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
     /**
@@ -120,16 +65,9 @@ public class GlobalExceptionHandler {
      * Returns 500 Internal Server Error.
      */
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleGeneralException(Exception ex) {
-
-        Map<String, Object> response = Map.of(
-                "timestamp", LocalDateTime.now(),
-                "status", HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "error", "Internal Server Error",
-                "message", "An unexpected error occurred. Please try again later."
-        );
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    public ResponseEntity<MortgageApiError> handleGeneralException(Exception ex, HttpServletRequest request) {
+        log.warn("Unexpected error: {}", ex.getMessage());
+        return toResponse(HttpStatus.INTERNAL_SERVER_ERROR, String.join("An Unexpected error occured. ", ex.getMessage()), request);
     }
 
     /**
@@ -139,22 +77,21 @@ public class GlobalExceptionHandler {
      * @return ResponseEntity<String> with an error message
      */
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<String> handleConstraintViolation(ConstraintViolationException ex) {
-        return ResponseEntity
-                .badRequest()
-                .body("Data constraint violated: " + ex.getMessage());
+    public ResponseEntity<MortgageApiError> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
+        String message = ex.getConstraintViolations().stream()
+                .map(violation -> violation.getPropertyPath() + ": " + violation.getMessage())
+                .collect(Collectors.joining(", "));
+        log.warn(message);
+        return toResponse(HttpStatus.BAD_REQUEST, message, request);
     }
 
-    /**
-     * Returns InvalidMortgageDataException with an error message if invalid mortgage data is encountered.
-     *
-     * @param ex InvalidMortgageDataException
-     * @return ResponseEntity<String> with an error message
-     */
-    @ExceptionHandler(InvalidMortgageDataException.class)
-    public ResponseEntity<String> handleInvalidMortgageData(InvalidMortgageDataException ex) {
-        return ResponseEntity
-                .badRequest()
-                .body(ex.getMessage());
+    private ResponseEntity<MortgageApiError> toResponse(HttpStatus status, String message, HttpServletRequest request) {
+        MortgageApiError body = new MortgageApiError(
+                status.name(),
+                message,
+                status.getReasonPhrase(),
+                request.getRequestURI()
+        );
+        return ResponseEntity.status(status).body(body);
     }
 }

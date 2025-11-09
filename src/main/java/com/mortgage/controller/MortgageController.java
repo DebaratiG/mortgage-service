@@ -3,6 +3,7 @@ package com.mortgage.controller;
 import com.mortgage.dto.MortgageCheckRequestDTO;
 import com.mortgage.dto.MortgageCheckResponseDTO;
 import com.mortgage.dto.MortgageRateDTO;
+import com.mortgage.exception.MortgageApiError;
 import com.mortgage.service.MortgageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -111,21 +112,24 @@ public class MortgageController {
                     responseCode = "400",
                     description = "Bad Request - Invalid input format or missing required fields",
                     content = @Content(
-                            mediaType = "application/json"
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = MortgageApiError.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "422",
                     description = "Unprocessable Entity - Validation failed. Request contains invalid values (e.g., negative amounts, invalid maturity period)",
                     content = @Content(
-                            mediaType = "application/json"
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = MortgageApiError.class)
                     )
             ),
             @ApiResponse(
                     responseCode = "500",
                     description = "Internal Server Error - An unexpected error occurred while processing the request",
                     content = @Content(
-                            mediaType = "application/json"
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = MortgageApiError.class)
                     )
             )
     })
