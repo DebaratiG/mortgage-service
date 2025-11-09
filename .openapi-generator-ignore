@@ -1,0 +1,5 @@
+# Ignore any generated test sources under src/test in the generated output
+src/test/java/org/openapitools/**
+
+# Extra safety: explicitly ignore the common test class name if generated elsewhere
+**/OpenApiGeneratorApplicationTests.java

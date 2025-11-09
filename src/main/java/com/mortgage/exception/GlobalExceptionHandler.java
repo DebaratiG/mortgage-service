@@ -49,14 +49,14 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles mortgage rate not found.
-     * Returns 400 Bad Request.
+     * If any of the eligibility check fails(eg loan value > 4x of income).
+     * Returns 400 Bad Request as request data is not valid
      */
-    @ExceptionHandler(MortgageRateNotFoundException.class)
+    @ExceptionHandler(MortgageEligibilityFailedException.class)
     public ResponseEntity<MortgageApiError> handleTypeMismatch(
-            MortgageRateNotFoundException ex, HttpServletRequest request) {
+            MortgageEligibilityFailedException ex, HttpServletRequest request) {
 
-        log.warn("Not found: {}", ex.getMessage());
+        log.warn("Bad Request: {}", ex.getMessage());
         return toResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), request);
     }
 
@@ -67,12 +67,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<MortgageApiError> handleGeneralException(Exception ex, HttpServletRequest request) {
         log.warn("Unexpected error: {}", ex.getMessage());
-        return toResponse(HttpStatus.INTERNAL_SERVER_ERROR, String.join("An Unexpected error occured. ", ex.getMessage()), request);
+        return toResponse(HttpStatus.INTERNAL_SERVER_ERROR, String.join("An Unexpected error occurred. ", ex.getMessage()), request);
     }
 
     /**
-     * Returns InvalidMortgageDataException with an error message if a data constraint violation is encountered.
-     *
+     * Returns ConstraintViolationException with an error message if a data constraint violation is encountered.
+     * This exception only matters when the service capability is exposed to insert interest rates.
      * @param ex ConstraintViolationException
      * @return ResponseEntity<String> with an error message
      */
@@ -87,7 +87,7 @@ public class GlobalExceptionHandler {
 
     private ResponseEntity<MortgageApiError> toResponse(HttpStatus status, String message, HttpServletRequest request) {
         MortgageApiError body = new MortgageApiError(
-                status.name(),
+                status.value(),
                 message,
                 status.getReasonPhrase(),
                 request.getRequestURI()

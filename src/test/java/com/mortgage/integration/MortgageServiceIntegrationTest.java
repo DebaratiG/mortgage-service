@@ -32,7 +32,7 @@ class MortgageServiceIntegrationTest {
     @DisplayName("End-to-End: Get interest rates and check eligibility")
     void shouldReturnSuccessWhenGetRatesAndCheckedEligibility() {
         // First, get interest rates
-        mockMvc.perform(get("/v1/api/interest-rates"))
+        mockMvc.perform(get("/api/v1/interest-rates"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray());
 
@@ -44,7 +44,7 @@ class MortgageServiceIntegrationTest {
                 new BigDecimal("350000")
         );
 
-        mockMvc.perform(post("/v1/api/mortgage-check")
+        mockMvc.perform(post("/api/v1/mortgage-check")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())

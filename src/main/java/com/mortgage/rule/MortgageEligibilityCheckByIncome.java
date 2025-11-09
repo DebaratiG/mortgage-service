@@ -49,7 +49,7 @@ public class MortgageEligibilityCheckByIncome implements MortgageEligibilityChec
                     BigDecimal.ZERO,
                     "Income and/or loan value is null. Income: " + income + ", Loan value: " + null);
         }
-
+        //True when loan value is less than max allowed loan value.
         if (loanValue.compareTo(maximumAllowedLoan) <= 0) {
             log.info("Income eligibility check passed.");
             return new MortgageCheckResponseDTO(true,

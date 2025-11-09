@@ -2,7 +2,7 @@ package com.mortgage.service;
 
 import com.mortgage.dto.MortgageCheckRequestDTO;
 import com.mortgage.dto.MortgageCheckResponseDTO;
-import com.mortgage.exception.MortgageRateNotFoundException;
+import com.mortgage.exception.MortgageEligibilityFailedException;
 import com.mortgage.rule.MortgageEligibilityCheckStrategy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -67,7 +67,7 @@ class MortgageStrategyServiceTest {
 
         // THEM
         assertThatThrownBy(() -> mortgageStrategyService.loanValidation(requestDTO))
-                .isInstanceOf(MortgageRateNotFoundException.class)
+                .isInstanceOf(MortgageEligibilityFailedException.class)
                 .hasMessageContaining("Eligibility failed for: Low credit score");
     }
 }

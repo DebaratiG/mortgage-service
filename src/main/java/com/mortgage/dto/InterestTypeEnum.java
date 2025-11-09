@@ -5,6 +5,5 @@ package com.mortgage.dto;
  */
 public enum InterestTypeEnum {
     FIXED,
-    VARIABLE,
-    NONE
+    VARIABLE
 }

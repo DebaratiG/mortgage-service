@@ -32,7 +32,7 @@ import java.util.List;
 @Slf4j
 @RequiredArgsConstructor
 @RestController
-@RequestMapping("/v1/api")
+@RequestMapping("/api")
 @Tag(name = "Mortgage API", description = "APIs for mortgage interest rates and eligibility checks")
 public class MortgageController {
 
@@ -64,22 +64,15 @@ public class MortgageController {
                     responseCode = "500",
                     description = "Internal server error - An unexpected error occurred while retrieving interest rates",
                     content = @Content(
-                            mediaType = "application/json"
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = MortgageApiError.class)
                     )
             )
     })
-    @GetMapping("/interest-rates")
-    public ResponseEntity<List<MortgageRateDTO>> getInterestRates() {
+    @GetMapping("/v1/interest-rates")
+    public List<MortgageRateDTO> getInterestRates() {
         log.info("Start retrieving interest rates");
-        List<MortgageRateDTO> interestRatesList = mortgageService.getInterestRates();
-
-        if (interestRatesList.isEmpty()) {
-            log.warn("No interest rates found");
-            return ResponseEntity.notFound().build();
-        } else {
-            log.info("Successfully retrieved {} interest rates", interestRatesList.size());
-            return ResponseEntity.ok(interestRatesList);
-        }
+        return mortgageService.getInterestRates();
     }
 
 
@@ -133,8 +126,8 @@ public class MortgageController {
                     )
             )
     })
-    @PostMapping("/mortgage-check")
-    public ResponseEntity<MortgageCheckResponseDTO> checkMortgageEligibility(
+    @PostMapping("/v1/mortgage-check")
+    public MortgageCheckResponseDTO checkMortgageEligibility(
             @Parameter(
                     description = "Mortgage check request with applicant's financial information",
                     required = true,
@@ -143,9 +136,6 @@ public class MortgageController {
             @Valid @RequestBody MortgageCheckRequestDTO requestDTO
     ) {
         log.info("Mortgage check request: {}", requestDTO);
-        var response = mortgageService.checkEligibility(requestDTO);
-        log.info("Mortgage check completed: {}", response);
-
-        return ResponseEntity.ok(response);
+        return mortgageService.checkEligibility(requestDTO);
     }
 }

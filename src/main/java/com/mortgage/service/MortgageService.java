@@ -4,10 +4,11 @@ import com.mortgage.dto.MortgageCheckRequestDTO;
 import com.mortgage.dto.MortgageCheckResponseDTO;
 import com.mortgage.dto.MortgageRateDTO;
 import com.mortgage.entity.MortgageRateEntity;
-import com.mortgage.exception.MortgageRateNotFoundException;
+import com.mortgage.exception.MortgageEligibilityFailedException;
 import com.mortgage.mapper.MortgageRateMapper;
 import com.mortgage.repository.MortgageRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MortgageService {
 
     private final MortgageRepository mortgageRepository;
@@ -41,7 +43,7 @@ public class MortgageService {
      * Added @Cacheable annotation to enable caching of the results as
      * Interest rates don't change frequently.
      * <p>
-     * The list is sorted by maturity period in ascending order.     *
+     * The list is sorted by maturity period in ascending order.
      *
      * @return a list of {@link MortgageRateDTO} objects representing the
      *         interest rates for various loan maturity periods.
@@ -89,7 +91,7 @@ public class MortgageService {
                     "All eligibility checks passed. Mortgage approved."
             );
         }
-
+        log.info("Mortgage check completed: {}", eligibilityCheck);
         return eligibilityCheck;
     }
 
@@ -102,7 +104,7 @@ public class MortgageService {
     private BigDecimal getInterestRateByMaturityPeriod(Integer maturityPeriod) {
         return mortgageRepository.findByMaturityPeriod(maturityPeriod)
                 .map(MortgageRateEntity::getInterestRate)
-                .orElseThrow(() -> new MortgageRateNotFoundException(
+                .orElseThrow(() -> new MortgageEligibilityFailedException(
                         "Interest rate not found for maturity period: " + maturityPeriod
                 ));
         }

@@ -1,0 +1,138 @@
+openapi: "3.0.3"
+info:
+  title: Mortgage Service
+  version: v1.0.0
+servers:
+  - url: http://localhost:8081
+    description: Generated server url
+tags:
+  - name: Mortgage API
+    description: APIs for mortgage interest rates and eligibility checks
+paths:
+  /api/v1/mortgage-check:
+    post:
+      tags:
+        - Mortgage API
+      summary: Check mortgage eligibility
+      description: Evaluates mortgage eligibility based on applicant's financial information including income, loan value, and home value for the given maturity period.
+      operationId: checkMortgageEligibility
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MortgageCheckRequestDTO'
+        required: true
+      responses:
+        '200':
+          description: Successfully processed mortgage eligibility check
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MortgageCheckResponseDTO'
+        '400':
+          description: Bad Request - Invalid input format or missing required fields
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MortgageApiError'
+        '422':
+          description: Unprocessable Entity - Validation failed. Request contains invalid values (e.g., negative amounts, invalid maturity period)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MortgageApiError'
+        '500':
+          description: Internal Server Error - An unexpected error occurred while processing the request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MortgageApiError'
+  /api/v1/interest-rates:
+    get:
+      tags:
+        - Mortgage API
+      summary: Get current interest rates
+      description: Retrieves the current mortgage interest rates for different maturity periods.
+      operationId: getInterestRates
+      responses:
+        '200':
+          description: Successfully retrieved interest rates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MortgageRateDTO'
+        '500':
+          description: Internal server error - An unexpected error occurred while retrieving interest rates
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MortgageApiError'
+components:
+  schemas:
+    MortgageCheckRequestDTO:
+      type: object
+      description: Mortgage check request with applicant's financial information
+      properties:
+        income:
+          type: number
+          description: The applicant's annual income
+        maturityPeriod:
+          type: integer
+          format: int32
+          description: The loan repayment period, expressed in months
+        loanValue:
+          type: number
+          description: The requested loan amount
+        homeValue:
+          type: number
+          description: The value of the property associated with the loan
+      required:
+        - homeValue
+        - income
+        - loanValue
+        - maturityPeriod
+    MortgageCheckResponseDTO:
+      type: object
+      properties:
+        eligible:
+          type: boolean
+        monthlyCosts:
+          type: number
+        reason:
+          type: string
+    MortgageApiError:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+        cause:
+          type: string
+        path:
+          type: string
+    MortgageRateDTO:
+      type: object
+      description: Represents a mortgage interest rate payload
+      properties:
+        maturityPeriod:
+          type: integer
+          format: int32
+          description: The loan term in months for which the interest rate applies
+        interestRate:
+          type: number
+          description: The annual interest rate percentage as a decimal value
+        lastUpdated:
+          type: string
+          format: date-time
+          description: The timestamp of the last time the rate was updated
+        type:
+          type: string
+          description: The type of the rate record
+          minLength: 1
+      required:
+        - interestRate
+        - lastUpdated
+        - maturityPeriod
+        - type

@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serial;
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.Instant;
 
@@ -24,10 +22,7 @@ import java.time.Instant;
 @Data
 @Builder
 @Table(name="mortgage_rates")
-public class MortgageRateEntity implements Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 1L;
+public class MortgageRateEntity {
 
     /**
      * Unique identifier for the mortgage rate record
@@ -52,6 +47,7 @@ public class MortgageRateEntity implements Serializable {
      * The timestamp indicating the last update to the mortgage rate record.
      */
     @Column(nullable = false)
+    @Builder.Default
     public Instant lastUpdated = Instant.now();
 
     /**

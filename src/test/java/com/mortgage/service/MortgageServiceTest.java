@@ -4,7 +4,7 @@ import com.mortgage.dto.MortgageCheckRequestDTO;
 import com.mortgage.dto.MortgageCheckResponseDTO;
 import com.mortgage.dto.MortgageRateDTO;
 import com.mortgage.entity.MortgageRateEntity;
-import com.mortgage.exception.MortgageRateNotFoundException;
+import com.mortgage.exception.MortgageEligibilityFailedException;
 import com.mortgage.mapper.MortgageRateMapper;
 import com.mortgage.repository.MortgageRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -115,14 +115,14 @@ class MortgageServiceTest {
     }
 
     @Test
-    @DisplayName("Should throw MortgageRateNotFoundException when no rate found")
+    @DisplayName("Should throw MortgageEligibilityFailedException when no rate found")
     void shouldThrowRateNotFoundWhenCheckEligible() {
         // WHEN
         when(mortgageRepository.findByMaturityPeriod(10)).thenReturn(Optional.empty());
 
         // THEN
         assertThatThrownBy(() -> mortgageService.checkEligibility(requestDTO))
-                .isInstanceOf(MortgageRateNotFoundException.class)
+                .isInstanceOf(MortgageEligibilityFailedException.class)
                 .hasMessageContaining("Interest rate not found for maturity period: 10");
     }
 }

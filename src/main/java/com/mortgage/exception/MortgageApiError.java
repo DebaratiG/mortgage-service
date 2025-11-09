@@ -10,5 +10,5 @@ package com.mortgage.exception;
  *  3. cause: Cause of the exception described for understanding of the issue.
  *  4. path: The path to the endpoint that caused the error.
  */
-public record MortgageApiError(String code, String message, String cause, String path) {
+public record MortgageApiError(Integer code, String message, String cause, String path) {
 }

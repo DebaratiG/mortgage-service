@@ -11,8 +11,6 @@ import java.math.RoundingMode;
 @Component
 public class MortgageMonthlyCostCalculatorHelper {
 
-    public static final int MONTHLY_COST_MULTIPLIER = 12;
-
     /**
      *
      * The calculation considers the loan value, annual interest rate, and the
